@@ -1,11 +1,8 @@
 import React, {createContext, useState, useEffect} from 'react';
-
 import axios from 'axios';
 
 
 export const ModalContext = createContext();
-
-
 
 const ModalProvider = (props) => {
     //state del provider
