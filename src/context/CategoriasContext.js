@@ -4,6 +4,8 @@ import React, { createContext, useState, useEffect} from 'react';
 //crear el context 
 export const CategoriasContext =createContext();
 
+
+
 //provider es donde se encuentran las funciones y state
 const CategoriasProvider = (props) =>{
 
