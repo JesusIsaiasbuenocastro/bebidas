@@ -1,44 +1,36 @@
+// src/context/RecetasContext.js
+import { createContext, useState, useCallback } from 'react';
 import axios from 'axios';
-import React, { createContext, useState, useEffect } from 'react';
 
 export const RecetasContext = createContext();
 
-const RecetasProvider = (props) => {
+const RecetasProvider = ({ children }) => {
+  const [recetas,    setRecetas]    = useState([]);
+  const [loading,    setLoading]    = useState(false);
+  const [error,      setError]      = useState(null);
+  const [consultado, setConsultado] = useState(false);
 
-    const [recetas, guardarRecetas] = useState([]); 
-    const [busqueda, buscarRecetas] = useState({
-        nombre: '',
-        categoria:''
-    });
-    const { nombre,categoria } = busqueda;
-    const [consultar, guardarConsultar] = useState(false);
-    useEffect(() => {
-        if(consultar){
-            const obtenerRecetas = async ()=>
-            {
-                const url =`https://www.thecocktaildb.com/api/json/v1/1/filter.php?i=${nombre}&c=${categoria}`;
-                const resultado = await axios.get(url);
+  const buscarRecetas = useCallback(async ({ nombre, categoria }) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const url = `https://www.thecocktaildb.com/api/json/v1/1/filter.php?i=${nombre}&c=${categoria}`;
+      const res = await axios.get(url);
+      setRecetas(Array.isArray(res.data.drinks)? res.data.drinks : []);
+      setConsultado(true);
+    } catch {
+      setError('No encontramos cócteles con esos filtros. Intenta otra combinación.');
+      setRecetas([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-               // console.log(resultado.data.drinks);
-               guardarRecetas(resultado.data.drinks);
-            }
-
-            obtenerRecetas();
-        }
-      
-    }, [ nombre,categoria,consultar])
-
-    return(
-        <RecetasContext.Provider
-            value={{
-                recetas,
-                buscarRecetas,
-                guardarConsultar
-            }}
-        >
-            {props.children}
-        </RecetasContext.Provider>
-    )
-}
+  return (
+    <RecetasContext.Provider value={{ recetas, loading, error, consultado, buscarRecetas }}>
+      {children}
+    </RecetasContext.Provider>
+  );
+};
 
 export default RecetasProvider;

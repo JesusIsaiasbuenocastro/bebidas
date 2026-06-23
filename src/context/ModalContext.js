@@ -1,43 +1,32 @@
-import React, {createContext, useState, useEffect} from 'react';
-
+// src/context/ModalContext.js
+import { createContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-
 
 export const ModalContext = createContext();
 
+const ModalProvider = ({ children }) => {
+  const [idReceta,     setIdReceta]     = useState(null);
+  const [informacion,  setInformacion]  = useState(null);
+  const [loadingModal, setLoadingModal] = useState(false);
 
+  useEffect(() => {
+    if (!idReceta) return;
+    setLoadingModal(true);
+    axios
+      .get(`https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i=${idReceta}`)
+      .then(r => setInformacion(r.data.drinks?.[0] || null))
+      .catch(() => setInformacion(null))
+      .finally(() => setLoadingModal(false));
+  }, [idReceta]);
 
-const ModalProvider = (props) => {
-    //state del provider
-    const [idReceta, guardarIdReceta] = useState(null);
-    const [informacion, guardarReceta] = useState({})
+  const abrir  = useCallback(id => setIdReceta(id), []);
+  const cerrar = useCallback(() => { setIdReceta(null); setInformacion(null); }, []);
 
-    //una vez que tenemos una receta llamar la api
-    useEffect(() => {
-        const obtenerReceta = async () => {
-            if(!idReceta) return;
-            
-            const url =`https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i=${idReceta}`;
-
-
-            const resultado = await axios.get(url);
-            guardarReceta(resultado.data.drinks[0]);
-        }
-        obtenerReceta();
-    }, [idReceta])
-
-    return (
-        <ModalContext.Provider
-            value ={{
-                informacion,
-                guardarIdReceta,
-                guardarReceta
-            }}
-        >
-
-            {props.children}
-        </ModalContext.Provider>
-    )
-}
+  return (
+    <ModalContext.Provider value={{ informacion, loadingModal, abrir, cerrar }}>
+      {children}
+    </ModalContext.Provider>
+  );
+};
 
 export default ModalProvider;
